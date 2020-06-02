@@ -27,7 +27,17 @@ let init = (options) => {
 };
 
 // run action
-let run = async (actions, cb) => {
+let run = async (contract, action, data, cb) => {
+
+    var actions = [{
+        account: contract.account,
+        name: action,
+        authorization: [{
+            actor: contract.account,
+            permission: "active"
+        }],
+        data: data
+    }];
 
     try {
 
