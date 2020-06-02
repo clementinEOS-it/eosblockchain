@@ -23,22 +23,14 @@ var contract = {
     scope: 'test'
 };
 
-var actions = [{
-    account: contract.account,
-    name: <NAME ACTION>,
-    authorization: [{
-        actor: contract.account,
-        permission: "active"
-    }],
-    data: {
-        data: '2020-05-08',
-        lat: 48.4567,
-        lng: 16.6789
-        value: 18.2
-    }
-}];
+var data = {
+    data: '2020-05-08',
+    lat: 48.4567,
+    lng: 16.6789
+    value: 18.2
+};
 
-eos.run(actions, (err, result) => {
+eos.run(contract, 'action', data, (err, result) => {
 
     if (err) {
 
@@ -46,7 +38,7 @@ eos.run(actions, (err, result) => {
 
     }
 
-})
+});
 
 ```
 
