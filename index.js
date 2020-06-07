@@ -67,7 +67,7 @@ let run = async (contract, action, data, cb) => {
 // Get data table from Blokchain network
 let getTable = async (contract, options, cb) => {
 
-    var _config = {
+    var config = {
         json: true,                 // Get the response as json
         code: contract.account,     // Contract that we target
         scope: contract.account,    // Account that owns the data
@@ -78,7 +78,7 @@ let getTable = async (contract, options, cb) => {
     };
 
     try {
-        const resp = await rpc.get_table_rows(_config);
+        const resp = await rpc.get_table_rows(config);
         cb(false, resp.rows);
 
     } catch (e) {
