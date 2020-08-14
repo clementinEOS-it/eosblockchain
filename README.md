@@ -75,7 +75,7 @@ eos.getTable(myaccount, options, (error, response) => {
 
 ```
 
-# Obtain a Public / Private key pair
+## Obtain a Public / Private key pair
 *getKeys()* generates a public / private key pair 
 
 ```
@@ -85,7 +85,7 @@ eos.getTable(myaccount, options, (error, response) => {
 
 ```
 
-# Create an Account
+## Create an Account
 Create an account in the blockchian network
 
 ```
