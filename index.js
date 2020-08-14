@@ -1,7 +1,9 @@
-const { Api, JsonRpc, RpcError } = require('eosjs');
-const { JsSignatureProvider } = require('eosjs/dist/eosjs-jssig');      // development only
-const fetch = require('node-fetch');                                    // node only; not needed in browsers
-const { TextEncoder, TextDecoder } = require('util');                   // node only; native TextEncoder/Decoder
+const { Api, JsonRpc, RpcError }    = require('eosjs');
+const { JsSignatureProvider }       = require('eosjs/dist/eosjs-jssig');      // development only
+const fetch                         = require('node-fetch');                                    // node only; not needed in browsers
+const { TextEncoder, TextDecoder }  = require('util');     
+const ecc                           = require('eosjs-ecc');
+var uuid                            = require("uuid");
 
 let signatureProvider; 
 let rpc, api;
@@ -26,18 +28,7 @@ let init = (options) => {
 
 };
 
-// run action
-let run = async (contract, action, data, cb) => {
-
-    var actions = [{
-        account: contract.account,
-        name: action,
-        authorization: [{
-            actor: contract.account,
-            permission: "active"
-        }],
-        data: data
-    }];
+let transaction = async (actions, callback) => {
 
     try {
 
@@ -50,27 +41,44 @@ let run = async (contract, action, data, cb) => {
             sign: true
         });
         
-        cb(false, result);
+        callback(false, result);
 
     } catch (e) {
 
         console.error('\n ------\n Caught exception run Action -> ' + e);
 
         if (e instanceof RpcError) {
-            cb(true, JSON.stringify(e.json, null, 2));
+            callback(true, JSON.stringify(e.json, null, 2));
         }
 
     };
 
+}
+
+// run action
+let run = async (account, action, data, cb) => {
+
+    var actions = [{
+        account: account,
+        name: action,
+        authorization: [{
+            actor: account,
+            permission: "active"
+        }],
+        data: data
+    }];
+
+    transaction(actions, cb);
+
 };
 
 // Get data table from Blokchain network
-let getTable = async (contract, options, cb) => {
+let getTable = async (account, options, cb) => {
 
     var config = {
         json: true,                 // Get the response as json
-        code: contract.account,     // Contract that we target
-        scope: contract.account,    // Account that owns the data
+        code: account,     // Contract that we target
+        scope: account,    // Account that owns the data
         table: options.table,               // Table name
         limit: options.limit,               // Here we limit to 1 to get only row
         reverse: false,             // Optional: Get reversed data
@@ -93,10 +101,147 @@ let getTable = async (contract, options, cb) => {
 
 };
 
+let getKeys = (cb) => {
+
+    var keys = {
+        public: '',
+        private: ''
+    };
+
+    ecc.randomKey().then(privateKey => {
+
+        keys.private = privateKey;
+        keys.public = ecc.privateToPublic(privateKey);
+
+        cb(keys);
+    });
+};
+
+let privateKey = (secret) => {
+    return ecc.seedPrivate(secret) 
+};
+
+let guid = l => {
+
+    var buf = [],
+    chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
+    charlen = chars.length,
+    length = l || 32;
+        
+    for (var i = 0; i < length; i++) {
+        buf[i] = chars.charAt(Math.floor(Math.random() * charlen));
+    }
+    
+    return buf.join('');
+}
+
+let createUser = (options, callback) => {
+
+    var n = guid(12)
+    
+    if (typeof options.name != 'undefined' || options.name != '') {
+        n = options.name
+    };
+
+    var account = {
+        name: n,
+        keys: {},
+        ram: options.ram || 8192,
+        stake_net: options.stake_net || '1.0000',
+        stake_cpu: options.stake_cpu || '1.0000',
+        symbol: options.symbol
+    };
+    
+    getKeys(keys => {
+        account.keys = keys;
+        callback(account);
+    });
+    
+};
+
+let createAccount = async (options, callback) => {
+
+    createUser(options, account => {
+
+        console.log('ACCOUNT: ' + JSON.stringify(account));
+
+        var newaccount_action = {
+            account: 'eosio',
+            name: 'newaccount',
+            authorization: [{
+                actor: 'eosio',
+                permission: 'active',
+            }],
+            data: {
+                creator: 'eosio',
+                name: account.name,
+                owner: {
+                    threshold: 1,
+                    keys: [{
+                        key: account.keys.public,
+                        weight: 1
+                    }],
+                    accounts: [],
+                    waits: []
+                },
+                active: {
+                threshold: 1,
+                keys: [{
+                    key: account.keys.public,
+                    weight: 1
+                }],
+                accounts: [],
+                waits: []
+                },
+            }
+        };
+
+        var buyram_action = {
+            account: 'eosio',
+            name: 'buyrambytes',
+            authorization: [{
+                actor: 'eosio',
+                permission: 'active',
+            }],
+            data: {
+                payer: 'eosio',
+                receiver: account.name,
+                bytes: account.ram,
+            }
+        };
+
+        var stake_action = {
+            account: 'eosio',
+            name: 'delegatebw',
+            authorization: [{
+                actor: 'eosio',
+                permission: 'active',
+            }],
+            data: {
+                from: 'eosio',
+                receiver: account.name,
+                stake_net_quantity: account.stake_net + ' ' + account.symbol,
+                stake_cpu_quantity: account.stake_cpu + ' ' + account.symbol,
+                transfer: false
+            }
+        };
+
+        var actions = [ newaccount_action, buyram_action, stake_action ];
+
+        transaction(actions, (err, result) => {
+            callback(err, account, result);
+        });
+
+    });
+
+}
+
 module.exports = {
     init,
     rpc,
     api,
     run,
-    getTable
+    getTable,
+    getKeys,
+    createAccount
 };

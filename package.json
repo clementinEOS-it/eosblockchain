@@ -1,6 +1,6 @@
 {
   "name": "eosblockchain",
-  "version": "1.0.4",
+  "version": "1.0.7",
   "description": "PlugIn nodejs about Blockchain EOS",
   "main": "index.js",
   "scripts": {
@@ -14,7 +14,9 @@
   "license": "ISC",
   "dependencies": {
     "core-js": "^3.6.5",
+    "eosblockchain": "^1.0.4",
     "eosjs": "^20.0.3",
+    "eosjs-ecc": "^4.0.7",
     "lodash": "^4.17.19",
     "moment": "^2.26.0",
     "node-fetch": "^2.6.0",

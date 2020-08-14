@@ -1,6 +1,25 @@
-## EOS Blockchain plugin
+# EOS Blockchain 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  ![npm](https://img.shields.io/npm/dw/eosjs.svg)
 
-## Start Connection to Blockchain
+eosblockchain is a Javascript library based on [EosJS](https://github.com/EOSIO/eosjs) 
+developed to for integrating with EOSIO-based blockchains for ease of use API's using the [EOSIO Nodeos RPC API](https://developers.eos.io/manuals/eos/latest/nodeos/plugins/chain_api_plugin/api-reference/index). The documentation for eosjs is structured in the following way:
+
+## NPM
+The official distribution package can be found at [NPM](https://www.npmjs.com/package/eosblockchain) 
+
+## Add dependency to your project
+
+```
+yarn add eosblockchain
+
+```
+or
+```
+npm install --save eosblockchain
+```
+
+## Connection to the Blockchain node
+*init() method* connects to the EOSIO Nodeos RPC API url and private key of the account to implement the digital signature of the transitions.
 
 ```
 const eos = require('eosblockchain');
@@ -14,50 +33,39 @@ eos.init(options);
     
 ```
 
-## Run Action
+## Run a Smart Contract action 
+*run () method* performs a network contract action, with the authorized account.
 
 ```
-var contract = {
-    account: 'test',
-    code: 'test', 
-    scope: 'test'
-};
-
-var data = {
+var example_data = {
     data: '2020-05-08',
     lat: 48.4567,
     lng: 16.6789
     value: 18.2
 };
 
-eos.run(contract, 'action', data, (err, result) => {
+eos.run(myaccount, 'action', example_data, (err, result) => {
 
     if (err) {
-
+        ....
     } else {
-
+        ....
     }
 
 });
 
 ```
 
-## Get Data Table
-
+## Read data from a table of a Smart Contract
+*getTable() methods* reads all data from a table of a Smart Contract with the authorized account.
 
 ```
-var contract = {
-    account: 'test',
-    code: 'test', 
-    scope: 'test'
-};
-
 var options = {
-    table : 'exampletable',
-    limit: -1 
+    table : 'exampletable',     // name of table
+    limit: -1                   // number of records 
 };
 
-eos.getTable(contract, options, (error, response) => {
+eos.getTable(myaccount, options, (error, response) => {
     if (err) {
         console.error('no data');
     } else {
@@ -67,3 +75,37 @@ eos.getTable(contract, options, (error, response) => {
 
 ```
 
+# Obtain a Public / Private key pair
+*getKeys()* generates a public / private key pair 
+
+```
+    getKeys(keys => {
+        console.log(keys);    
+    });
+
+```
+
+# Create an Account
+Create an account in the blockchian network
+
+```
+    var options = {
+        name: '',               // blank for a random name otherwise the maximum length must be 12 characters
+        symbol: 'EOS',
+        ram: 10000,             // undefined set default value = 8192
+        stake_net: '1.000',     // undefined set default value = 1.000
+        stake_cpu: '1.000'      // undefined set default value = 1.000
+    };
+
+    eos.createAccount(options, (err, account, result) => {
+                      
+        if (err) {
+            throw err;
+        };
+
+        console.table(account);
+        console.log('Result ---- \n' + JSON.stringify(result));
+
+    });
+
+```
