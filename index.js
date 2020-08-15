@@ -139,7 +139,7 @@ let createUser = (options, callback) => {
 
     var n = guid(12)
     
-    if (typeof options.name != 'undefined' || options.name != '') {
+    if (typeof options.name != 'undefined' && options.name != '') {
         n = options.name
     };
 

@@ -1,7 +1,7 @@
 {
   "name": "eosblockchain",
-  "version": "1.0.7",
-  "description": "PlugIn nodejs about Blockchain EOS",
+  "version": "1.0.8",
+  "description": "Plugin nodejs about Blockchain EOS",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -14,7 +14,6 @@
   "license": "ISC",
   "dependencies": {
     "core-js": "^3.6.5",
-    "eosblockchain": "^1.0.4",
     "eosjs": "^20.0.3",
     "eosjs-ecc": "^4.0.7",
     "lodash": "^4.17.19",
