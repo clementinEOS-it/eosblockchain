@@ -109,3 +109,7 @@ Create an account in the blockchian network
     });
 
 ```
+
+## Get information about EOS Blockchain
+
+## Get information about Last Block

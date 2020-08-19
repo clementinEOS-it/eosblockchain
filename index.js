@@ -137,10 +137,12 @@ let guid = l => {
 
 let createUser = (options, callback) => {
 
-    var n = guid(12)
+    var n;
     
     if (typeof options.name != 'undefined' && options.name != '') {
         n = options.name
+    } else {
+        n = guid(12);
     };
 
     var account = {
@@ -234,6 +236,48 @@ let createAccount = async (options, callback) => {
 
     });
 
+};
+
+// Get Information about EOS Blockchain network 
+let getInfo = async (callback) => {
+
+    
+    try {
+
+        const info = await rpc.get_info();
+        //console.log('---- INFO ----\n' + JSON.stringify(info));
+        callback(false, info);
+
+    } catch (e) {
+        
+        console.log('\nCaught exception by Get Info ' + e);
+
+        if (e instanceof RpcError) {
+            callback(true, JSON.stringify(e.json, null, 2));
+        }
+    }
+    
+}
+
+// get data about last block produced
+let getLastBlock = async (info, callback) => {
+ 
+    try {
+
+        // console.log('----> Last Block: ' + info.last_irreversible_block_num);
+        const block = await rpc.get_block(info.last_irreversible_block_num);
+        // console.log('\n---- BLOCK ----\n' + JSON.stringify(block));
+        callback(false, block);
+
+    } catch (e) {
+        
+        console.log('\nCaught exception by Get Block ' + e);
+
+        if (e instanceof RpcError) {
+            callback(true, JSON.stringify(e.json, null, 2));
+        }
+    }
+    
 }
 
 module.exports = {
@@ -243,5 +287,7 @@ module.exports = {
     run,
     getTable,
     getKeys,
-    createAccount
+    createAccount,
+    getLastBlock,
+    getInfo
 };
