@@ -1,37 +1,116 @@
-## Welcome to GitHub Pages
+# EOS Blockchain 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  ![npm](https://img.shields.io/npm/dw/eosjs.svg)
 
-You can use the [editor on GitHub](https://github.com/gzileni/eosblockchain/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+eosblockchain is a Javascript library based on [EosJS](https://github.com/EOSIO/eosjs) 
+developed to for integrating with EOSIO-based blockchains for ease of use API's using the [EOSIO Nodeos RPC API](https://developers.eos.io/manuals/eos/latest/nodeos/plugins/chain_api_plugin/api-reference/index). The documentation for eosjs is structured in the following way:
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+## NPM
+The official distribution package can be found at [NPM](https://www.npmjs.com/package/eosblockchain) 
 
-### Markdown
+## Add dependency to your project
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+```
+yarn add eosblockchain
 
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+```
+or
+```
+npm install --save eosblockchain
 ```
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+## Connection to the Blockchain node
+*init() method* connects to the EOSIO Nodeos RPC API url and private key of the account to implement the digital signature of the transitions.
 
-### Jekyll Themes
+```
+const eos = require('eosblockchain');
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/gzileni/eosblockchain/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+var options = {
+    url: 'https://api.testnet.eos.io',
+    signatureKey: '5K1i8x6QE8nEUaJTvhtWZsy6r9b3tPWrSV2dexBhmQfRBLFHFoT' 
+};
 
-### Support or Contact
+eos.init(options);
+    
+```
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+## Run a Smart Contract action 
+*run () method* performs a network contract action, with the authorized account.
+
+```
+var example_data = {
+    data: '2020-05-08',
+    lat: 48.4567,
+    lng: 16.6789
+    value: 18.2
+};
+
+eos.run(myaccount, 'action', example_data, (err, result) => {
+
+    if (err) {
+        ....
+    } else {
+        ....
+    }
+
+});
+
+```
+
+## Read data from a table of a Smart Contract
+*getTable() methods* reads all data from a table of a Smart Contract with the authorized account.
+
+```
+var options = {
+    table : 'exampletable',     // name of table
+    limit: -1                   // number of records 
+};
+
+eos.getTable(myaccount, options, (error, response) => {
+    if (err) {
+        console.error('no data');
+    } else {
+        console.log('OK.');
+    }
+})
+
+```
+
+## Obtain a Public / Private key pair
+*getKeys()* generates a public / private key pair 
+
+```
+    getKeys(keys => {
+        console.log(keys);    
+    });
+
+```
+
+## Create an Account
+Create an account in the blockchian network
+
+```
+    var options = {
+        name: '',               // blank for a random name otherwise the maximum length must be 12 characters
+        symbol: 'EOS',
+        ram: 10000,             // undefined set default value = 8192
+        stake_net: '1.000',     // undefined set default value = 1.000
+        stake_cpu: '1.000'      // undefined set default value = 1.000
+    };
+
+    eos.createAccount(options, (err, account, result) => {
+                      
+        if (err) {
+            throw err;
+        };
+
+        console.table(account);
+        console.log('Result ---- \n' + JSON.stringify(result));
+
+    });
+
+```
+
+## Get information about EOS Blockchain
+
+## Get information about Last Block
+
