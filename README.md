@@ -106,11 +106,6 @@ Create an account in the blockchain network
         console.table(account);
         console.log('Result ---- \n' + JSON.stringify(result));
 
-        // Get information about transactions 
-        eos.getProcessedInfoAccount(result, processed => {
-            console.log(JSON.stringify(processed))
-        });
-
         // Get information about transaction
         eos.getProcessedTrxsAccount(tag, result, trxs => {        
             console.log('Transactions: ' + JSON.stringify(trxs));   

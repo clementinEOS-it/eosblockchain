@@ -116,14 +116,13 @@ let createKeys = (cb) => {
 
 let guid = l => {
 
-    var buf = [],
-    chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
-    charlen = chars.length,
-    length = l || 32;
+    var buf = [];
+    var chars = 'abcdefghijklmnopqrstuvwxyz12345';
+    var length = l || 32;
         
     for (var i = 0; i < length; i++) {
-        buf[i] = chars.charAt(Math.floor(Math.random() * charlen));
-    }
+        buf.push(chars.charAt(Math.floor(Math.random() * chars.length)));
+    };
     
     return buf.join('');
 }
@@ -145,9 +144,10 @@ let createUser = (options, callback) => {
         stake_net: options.stake_net || '1.0000',
         stake_cpu: options.stake_cpu || '1.0000',
         symbol: options.symbol,
-        producer: false,
         processed: {}
     };
+
+    console.log(JSON.stringify(account));
     
     createKeys(pkey => {
         account.publickey = pkey;
@@ -226,7 +226,12 @@ let createAccount = async (options, callback) => {
         var actions = [ newaccount_action, buyram_action, stake_action ];
 
         transaction(actions, (err, result) => {
-            callback(err, account, result);
+
+            getProcessedInfoAccount(result, processed => {
+                account.processed = processed;
+                callback(err, account, result);
+            });
+            
         });
 
     });
@@ -264,6 +269,8 @@ let getProcessedTrxsAccount = (user_id, transaction, callback) => {
             trx_id: item.trx_id,
             block_num: item.block_num,
             block_time: item.block_time,
+            elapsed: transaction.processed.elapsed,
+            net_usage: transaction.processed.net_usage
         }
     });
 
@@ -357,6 +364,5 @@ module.exports = {
     getInfo,
     getInfoAccount,
     getTransactions,
-    getProcessedInfoAccount,
     getProcessedTrxsAccount
 };
