@@ -86,7 +86,7 @@ eos.getTable(myaccount, options, (error, response) => {
 ```
 
 ## Create an Account
-Create an account in the blockchian network
+Create an account in the blockchain network
 
 ```
     var options = {
@@ -106,10 +106,99 @@ Create an account in the blockchian network
         console.table(account);
         console.log('Result ---- \n' + JSON.stringify(result));
 
+        // Get information about transactions 
+        eos.getProcessedInfoAccount(result, processed => {
+            console.log(JSON.stringify(processed))
+        });
+
+        // Get information about transaction
+        eos.getProcessedTrxsAccount(tag, result, trxs => {        
+            console.log('Transactions: ' + JSON.stringify(trxs));   
+        });
+
     });
 
 ```
 
 ## Get information about EOS Blockchain
 
+```
+    eos.getInfo((err, info) => {
+        if (err) {
+            console.error('Can\'t read information about network ... ');
+        } else {
+            console.log(JSON.stringify(info));
+        }
+    });
+```
+
 ## Get information about Last Block
+
+```
+
+    let getInfo = (callback) => {
+        eos.getInfo((err, info) => {
+            if (err) {
+                console.error('Can\'t read information about network ... ');
+                callback(true, 'Can\'t read information about network ... ');
+            } else {
+                console.log(JSON.stringify(info));
+                callback(false, info);
+            }
+        });
+    }
+
+    // Get information about Last Block
+    getInfo((err, info) => {
+        if (!err) {
+            eos.getLastBlock(info, (err, block) => {
+                if (err) {
+                    console.error('Can\'t read block information');
+                } else {
+                    console.log(JSON.stringify(block));
+                }
+            });
+        }
+    });
+
+```
+
+## Get Keys
+
+```
+    eos.getKeys('EOS75Uzg4jGiXiuLtgWyqhh7D5fdSBPTioaeNgvcxemPULPZqrFXe', (err, keys) => {
+        if (err) {
+            console.error('Can\'t read account information');
+        } else {
+            console.log(JSON.stringify(keys));
+        }
+    });
+
+```
+
+## Get Information about account
+
+```
+    eos.getInfoAccount('clementineos33', (err, account) => {
+        if (err) {
+            console.error('Can\'t read account information')
+        } else {
+            console.log(JSON.stringify(account))
+        }
+    });
+
+```
+
+## Get data about transaction 
+
+```
+    eos.getTransactions('ed0ccb95db880b9b2becdcbfda415f69e6eff9da05147631dea3f6659095d418', 
+        (err, transactions) => {
+        if (err) {
+            console.error('Can\'t read transactions information');
+        } else {
+            console.log(JSON.stringify(transaction));
+        }
+    });
+
+```

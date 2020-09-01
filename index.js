@@ -3,10 +3,25 @@ const { JsSignatureProvider }       = require('eosjs/dist/eosjs-jssig');      //
 const fetch                         = require('node-fetch');                                    // node only; not needed in browsers
 const { TextEncoder, TextDecoder }  = require('util');     
 const ecc                           = require('eosjs-ecc');
-var uuid                            = require("uuid");
+const uuid                          = require("uuid");
+const log                           = require('logbootstrap');
+const _                             = require('lodash');
 
 let signatureProvider; 
 let rpc, api;
+
+let postError = (logMsg, error, callback) => {
+    
+    var msg = logMsg + '\n' + error;
+    log('danger', msg);
+    console.error(logMsg);
+
+    if (error instanceof RpcError) {
+        callback(true, JSON.stringify(error.json, null, 2));
+    } else {
+        callback(true, logMsg);
+    }
+};
 
 // init blockchain 
 let init = (options) => {
@@ -44,13 +59,7 @@ let transaction = async (actions, callback) => {
         callback(false, result);
 
     } catch (e) {
-
-        console.error('\n ------\n Caught exception run Action -> ' + e);
-
-        if (e instanceof RpcError) {
-            callback(true, JSON.stringify(e.json, null, 2));
-        }
-
+        postError('\nCaught exception run transaction -> ', e, callback);
     };
 
 }
@@ -91,34 +100,18 @@ let getTable = async (account, options, cb) => {
 
     } catch (e) {
         
-        console.log('\nCaught exception by Get Data Table ' + e);
-        console.log('\nOptions ' + JSON.stringify(config));
-
-        if (e instanceof RpcError) {
-            cb(true, JSON.stringify(e.json, null, 2));
-        }
+        log('danger', '\nCaught exception by Get Data Table ' + e);
+        postError('\nCaught exception by Get Data Table ', e, callback);
     }
 
 };
 
-let getKeys = (cb) => {
+let createKeys = (cb) => {
 
-    var keys = {
-        public: '',
-        private: ''
-    };
-
-    ecc.randomKey().then(privateKey => {
-
-        keys.private = privateKey;
-        keys.public = ecc.privateToPublic(privateKey);
-
-        cb(keys);
+    ecc.randomKey().then(privateK => {
+        var publicK = ecc.privateToPublic(privateK);
+        cb(publicK);
     });
-};
-
-let privateKey = (secret) => {
-    return ecc.seedPrivate(secret) 
 };
 
 let guid = l => {
@@ -147,15 +140,17 @@ let createUser = (options, callback) => {
 
     var account = {
         name: n,
-        keys: {},
+        publickey: '',
         ram: options.ram || 8192,
         stake_net: options.stake_net || '1.0000',
         stake_cpu: options.stake_cpu || '1.0000',
-        symbol: options.symbol
+        symbol: options.symbol,
+        producer: false,
+        processed: {}
     };
     
-    getKeys(keys => {
-        account.keys = keys;
+    createKeys(pkey => {
+        account.publickey = pkey;
         callback(account);
     });
     
@@ -165,7 +160,7 @@ let createAccount = async (options, callback) => {
 
     createUser(options, account => {
 
-        console.log('ACCOUNT: ' + JSON.stringify(account));
+        // console.log('ACCOUNT: ' + JSON.stringify(account));
 
         var newaccount_action = {
             account: 'eosio',
@@ -180,7 +175,7 @@ let createAccount = async (options, callback) => {
                 owner: {
                     threshold: 1,
                     keys: [{
-                        key: account.keys.public,
+                        key: account.publickey,
                         weight: 1
                     }],
                     accounts: [],
@@ -189,7 +184,7 @@ let createAccount = async (options, callback) => {
                 active: {
                 threshold: 1,
                 keys: [{
-                    key: account.keys.public,
+                    key: account.publickey,
                     weight: 1
                 }],
                 accounts: [],
@@ -238,6 +233,44 @@ let createAccount = async (options, callback) => {
 
 };
 
+let getProcessedInfoAccount = (transaction, callback) => {
+
+    var _account_info_filtered = _.filter(transaction.processed.action_traces, item => {
+        return item.act.name == 'newaccount'
+    });
+
+    var result = _.map(_account_info_filtered, item => {
+        return {
+            name_processed: item.act.data.name,
+            trx_id: item.trx_id,
+            block_num: item.block_num,
+            block_time: item.block_time,
+        }
+    });
+
+    callback(result);
+
+}
+
+let getProcessedTrxsAccount = (user_id, transaction, callback) => {
+
+    var transaction_uniq = _.uniqBy(transaction.processed.action_traces, item => {
+        return item.trx_id;
+    });
+
+    var result = _.map(transaction_uniq, item => {
+        return {
+            user_id: user_id,
+            trx_id: item.trx_id,
+            block_num: item.block_num,
+            block_time: item.block_time,
+        }
+    });
+
+    callback(result);
+
+};
+
 // Get Information about EOS Blockchain network 
 let getInfo = async (callback) => {
 
@@ -249,12 +282,7 @@ let getInfo = async (callback) => {
         callback(false, info);
 
     } catch (e) {
-        
-        console.log('\nCaught exception by Get Info ' + e);
-
-        if (e instanceof RpcError) {
-            callback(true, JSON.stringify(e.json, null, 2));
-        }
+        postError('\nCaught exception by Get Info ->', e, callback);
     }
     
 }
@@ -264,21 +292,58 @@ let getLastBlock = async (info, callback) => {
  
     try {
 
-        // console.log('----> Last Block: ' + info.last_irreversible_block_num);
         const block = await rpc.get_block(info.last_irreversible_block_num);
-        // console.log('\n---- BLOCK ----\n' + JSON.stringify(block));
         callback(false, block);
 
     } catch (e) {
-        
-        console.log('\nCaught exception by Get Block ' + e);
-
-        if (e instanceof RpcError) {
-            callback(true, JSON.stringify(e.json, null, 2));
-        }
+        postError('\nCaught exception by Get Block ->', e, callback);
     }
     
-}
+};
+
+let getInfoAccount = async (name, callback) => {
+
+    try {
+
+        const account = await rpc.get_account(name);
+        log('info', JSON.stringify(account));
+        callback(false, account);
+
+    } catch (e) {
+        postError('\nCaught exception by Get Info Account -> ', e, callback);
+    };
+
+};
+
+// https://developers.eos.io/manuals/eosjs/latest/API-Reference/classes/_eosjs_api_.api/#gettransactionabis
+let getTransactions = async (id, callback) => {
+
+    try {
+
+        const transactions = await rpc.history_get_transaction(id);
+        // log('info', JSON.stringify(transaction));
+        callback(false, transactions);
+
+    } catch (e) {
+        postError('\nCaught exception getTransaction -> ', e, callback);
+    };
+    
+};
+
+// https://developers.eos.io/manuals/eosjs/latest/API-Reference/classes/_eosjs_jsonrpc_.jsonrpc/#history_get_transactions
+let getKeys = async (publickey, callback) => {
+    
+    try {
+
+        const transactions = await rpc.history_get_key_accounts(publickey);
+        // log('info', JSON.stringify(transaction));
+        callback(false, transactions);
+
+    } catch (e) {
+        postError('\nCaught exception getKeys -> ', e, callback);
+    };
+    
+};
 
 module.exports = {
     init,
@@ -289,5 +354,9 @@ module.exports = {
     getKeys,
     createAccount,
     getLastBlock,
-    getInfo
+    getInfo,
+    getInfoAccount,
+    getTransactions,
+    getProcessedInfoAccount,
+    getProcessedTrxsAccount
 };
