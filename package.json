@@ -16,7 +16,7 @@
     "core-js": "^3.6.5",
     "eosjs": "^20.0.3",
     "eosjs-ecc": "^4.0.7",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "logbootstrap": "^1.0.0",
     "moment": "^2.26.0",
     "node-fetch": "^2.6.0",
